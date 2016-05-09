@@ -40,7 +40,69 @@ html, body {
 <div id="map"></div>
 
 <script>
-var map, latitude, longitude;
+var map;
+var markers = [];
+var originInput = document.getElementById('origin-input');
+
+// center at current location
+var latitude, longitude;
+navigator.geolocation.getCurrentPosition(function(geo) {
+  latitude  = geo.coords.latitude;
+  longitude = geo.coords.longitude;
+});
+
+
+
+function initMap() {
+  if(!latitude || !longitude) {
+    setTimeout(initMap, 100);
+    return;
+  }
+
+  // make the map
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: {lat: latitude, lng: longitude},
+    zoom: 12
+  });
+
+  // click events add marker
+  map.addListener('click', function(e) {
+    addMarkerAt(e.latLng, map);
+  });
+
+  // add the autocomplete box
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(originInput);
+  var origin_autocomplete = new google.maps.places.Autocomplete(originInput);
+  origin_autocomplete.bindTo('bounds', map);
+
+  // var directionsDisplay = new google.maps.DirectionsRenderer({map: map});
+
+  // autocompleting adds a marker
+  origin_autocomplete.addListener('place_changed', function() {
+    var place = origin_autocomplete.getPlace();
+    if (!place.geometry) {
+      window.alert("Autocomplete's returned place contains no geometry");
+      return;
+    }
+    expandViewportToFitPlace(map, place);
+    addMarkerFor(place, map);
+  });
+}
+
+function addMarkerAt(latLng, map) {
+  var marker = new google.maps.Marker({
+    position: latLng,
+    map: map
+  });
+  markers.push(marker);
+}
+
+function addMarkerFor(place, map) {
+  var marker = new google.maps.Marker({map: map});
+  // marker.addListener('click', function() { });
+  marker.setPlace({placeId: place.place_id, location: place.geometry.location});
+  markers.push(marker);
+}
 
 function expandViewportToFitPlace(map, place) {
   if (place.geometry.viewport) {
@@ -51,59 +113,6 @@ function expandViewportToFitPlace(map, place) {
     map.setZoom(15);
   }
 }
-
-
-
-function initMap() {
-  if(latitude && longitude) {
-    map = new google.maps.Map(document.getElementById('map'), {
-      center: {lat: latitude, lng: longitude},
-      zoom: 12
-    });
-  } else {
-    setTimeout(initMap, 100);
-    return;
-  }
-
-  var origin_input = document.getElementById('origin-input');
-  map.controls[google.maps.ControlPosition.TOP_LEFT].push(origin_input);
-
-  var origin_autocomplete = new google.maps.places.Autocomplete(origin_input);
-  origin_autocomplete.bindTo('bounds', map);
-
-  // var directionsDisplay = new google.maps.DirectionsRenderer({map: map});
-
-  origin_autocomplete.addListener('place_changed', function() {
-    var place = origin_autocomplete.getPlace();
-    if (!place.geometry) {
-      window.alert("Autocomplete's returned place contains no geometry");
-      return;
-    }
-    expandViewportToFitPlace(map, place);
-    // TODO: track this marker
-    var marker = new google.maps.Marker({map: map});
-    marker.addListener('click', function() { });
-    marker.setPlace({placeId: place.place_id, location: place.geometry.location});
-    marker.setVisible(true);
-  });
-
-  map.addListener('click', function(e) {
-    placeMarkerAndPanTo(e.latLng, map);
-  });
-}
-
-function placeMarkerAndPanTo(latLng, map) {
-  // TODO: track this marker
-  var marker = new google.maps.Marker({
-    position: latLng,
-    map: map
-  });
-}
-
-navigator.geolocation.getCurrentPosition(function(geo) {
-  latitude  = geo.coords.latitude;
-  longitude = geo.coords.longitude;
-});
 </script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=<%= @api_key || raise %>&callback=initMap&libraries=places" async defer>
