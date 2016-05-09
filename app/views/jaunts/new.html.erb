@@ -51,8 +51,6 @@ function expandViewportToFitPlace(map, place) {
   }
 }
 
-function setPin(map, place) {
-}
 
 
 function initMap() {
@@ -72,6 +70,8 @@ function initMap() {
   var origin_autocomplete = new google.maps.places.Autocomplete(origin_input);
   origin_autocomplete.bindTo('bounds', map);
 
+  // var directionsDisplay = new google.maps.DirectionsRenderer({map: map});
+
   origin_autocomplete.addListener('place_changed', function() {
     var place = origin_autocomplete.getPlace();
     if (!place.geometry) {
@@ -79,7 +79,10 @@ function initMap() {
       return;
     }
     expandViewportToFitPlace(map, place);
-    setPin(map, place);
+    var marker = new google.maps.Marker({map: map});
+    marker.addListener('click', function() { });
+    marker.setPlace({placeId: place.place_id, location: place.geometry.location});
+    marker.setVisible(true);
   });
 }
 
