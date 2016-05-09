@@ -47,6 +47,7 @@ function expandViewportToFitPlace(map, place) {
     map.fitBounds(place.geometry.viewport);
   } else {
     map.setCenter(place.geometry.location);
+    // map.panTo(place.geometry.location);
     map.setZoom(15);
   }
 }
@@ -79,10 +80,23 @@ function initMap() {
       return;
     }
     expandViewportToFitPlace(map, place);
+    // TODO: track this marker
     var marker = new google.maps.Marker({map: map});
     marker.addListener('click', function() { });
     marker.setPlace({placeId: place.place_id, location: place.geometry.location});
     marker.setVisible(true);
+  });
+
+  map.addListener('click', function(e) {
+    placeMarkerAndPanTo(e.latLng, map);
+  });
+}
+
+function placeMarkerAndPanTo(latLng, map) {
+  // TODO: track this marker
+  var marker = new google.maps.Marker({
+    position: latLng,
+    map: map
   });
 }
 
